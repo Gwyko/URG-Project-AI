@@ -104,7 +104,8 @@ if os.path.exists(embed_index_path):
     vector_store = FAISS.load_local(embed_index_path, embed_model, allow_dangerous_deserialization=True)
 else:
     print("Creating Embeddings")
-    vector_store = FAISS.from_documents(split_docs, embed_model).save_local(embed_index_path)
+    vector_store = FAISS.from_documents(split_docs, embed_model)
+    vector_store.save_local(embed_index_path)
     print(f"New vector store created and saved to '{embed_index_path}'.")
 
 # Stage 4: THE RAG CHAIN
@@ -124,7 +125,7 @@ Do not answer the question. Just classify it.
 
 - Greetings like 'hello', 'hi' are NOT valid questions.
 - Simple statements or off-topic questions are NOT valid.
-- Questions about the university, its courses, staff, facilities, or the IT faculty ARE valid.
+- Questions about the university, its courses, staff, facilities, or the IT faculty ARE valid and even if its about the student academic itself.
 
 Look at the user input below and respond with only a single word: True or False.
 
