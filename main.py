@@ -3,13 +3,11 @@ import os
 import json
 import random
 
-import concurrent.futures
 from functools import partial
 from tqdm import tqdm
 
 # vvv File type loader vvv
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_core.documents import Document
 
 # vvv Paragraph Splitters vvv
