@@ -2,6 +2,7 @@
 import os
 import json
 import random
+import subprocess
 
 from functools import partial
 from tqdm import tqdm
@@ -17,10 +18,10 @@ from langchain.prompts import PromptTemplate
 # vvv AI MODELS vvv
 from langchain_community.embeddings import OllamaEmbeddings # translates into vectors
 from langchain_community.vectorstores import FAISS # index no need to convert to vector everytime
-from langchain_community.llms import Ollama
+from langchain_ollama import OllamaLLM
 
 # vvv Makes your life easier vvv
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 # Config
@@ -29,13 +30,19 @@ embed_index_path = "vector_index"
 
 embed_model = OllamaEmbeddings(model="nomic-embed-text")
 LLM_model = "mistral" 
-llm = Ollama(model=LLM_model)
+llm = OllamaLLM(model=LLM_model)
 
 c_size = 500
 c_overlap = 100
 
 DEBUG = False
 PROCESSED_CHUNKS_FILE = 'processed_chunks.json'
+
+# Fix memory leak
+ollama_exe_path = r'"C:\Users\gwyko\AppData\Local\Programs\Ollama\ollama app.exe"'
+ollama_process = subprocess.Popen(ollama_exe_path)
+ollama_process.kill()
+ollama_process = subprocess.Popen(ollama_exe_path)
 
 # finding data folder
 if os.path.exists(data_folder_path):
@@ -170,32 +177,69 @@ Answer (as a list of facts with citations):
 
 print("RAG chain is ready. You can now ask questions.")
 
+OutputEnhancerPrompt = PromptTemplate(
+    template="""You are a helpful AI assistant that polishes the final answer for a user. Your task is to take the raw output from a retrieval system and make it more polished, conversational, and user-friendly.
+
+Follow these rules:
+1.  **Do NOT add any new information or facts.** Your job is only to reformat and rephrase the input.
+2.  **Preserve all citations** exactly as they appear (e.g., [Source: file.pdf, Page: 1]). Do not alter the citations.
+3.  Combine the listed facts into a smooth, easy-to-read paragraph or a clean bulleted list.
+
+---
+
+**Analyze the raw output below:**
+
+<raw_llm_output>
+{llm_output}
+</raw_llm_output>
+
+---
+
+**Instructions for your response:**
+
+- **IF the raw output contains facts and citations:** Rephrase it into a welcoming and clear response. Start with a friendly sentence like "Here is the information I found based on the provided documents:" or "Certainly, here's what I found about your question:".
+
+- **IF the raw output is the exact phrase "The provided documents do not contain an answer to this question.":** Rephrase this into a more helpful and apologetic response. Suggest that the user could try asking in a different way or that the information might not be available in the documents. For example: "I'm sorry, I couldn't find specific information on that topic within the provided documents. You could try rephrasing your question, or the information may not be in my knowledge base."
+
+**Polished Answer:**
+""",
+    input_variables=["llm_output"],
+)
+
 # THIS THE CORE THE BRAIN THE EVERYTHINGGG!!!!
 retriever = vector_store.as_retriever(search_kwargs={'k': 5})
 
-verification_chain = (
-    {"verify": RunnablePassthrough()}
-    | verify_question
-    | llm
-    |StrOutputParser()
-)
-prompt_enhancer_chain = (
-    {"question": RunnablePassthrough()}
-    | prompt_enhancer_template
-    | llm
-    | StrOutputParser()
-)
-rag_chain = (
-    {
-        "context": retriever,
-        "input": RunnablePassthrough()
-    }
-    | prompt
-    | llm
-    | StrOutputParser()
-)
+verification_chain = ({"verify": RunnablePassthrough()} | verify_question | llm | StrOutputParser())
+prompt_enhancer_chain = ({"question": RunnablePassthrough()} | prompt_enhancer_template | llm | StrOutputParser())
+rag_chain = ({"context": retriever, "input": RunnablePassthrough()} | prompt | llm | StrOutputParser())
+output_enhancer = ({"llm_output": RunnablePassthrough()} | OutputEnhancerPrompt | llm | StrOutputParser())
 
 while True:
+    user_prompt = input(random.choice(fun_prompts))
+    if user_prompt == exit or quit: break
+    if not user_prompt: continue
+
+    print("> verifying question")
+    verification_result = verification_chain.invoke(user_prompt)
+    print("> verfication status: ", verification_result)
+
+    if not "True" in verification_result:
+        print("Please ask a question related to the Sohar University or IT faculty.")
+        continue
+
+    print("> enhancing user prompt")
+    enhanced_question = prompt_enhancer_chain.invoke(user_prompt)
+    print(f'> "{enhanced_question}"')
+
+    print("> answering...")
+    answer = rag_chain.invoke(enhanced_question)
+
+    print("> enhancing answer")
+    enhanced_answer = output_enhancer.invoke(answer)
+    print(answer)
+    print("=" * 50)
+
+"""while True:
     try:
         query = input(random.choice(fun_prompts))
         if query.lower() == 'exit':
@@ -229,6 +273,4 @@ while True:
         break
     except Exception as e:
         print(f"\nAn error occurred: {e}")
-        break
-
-print("Exiting the RAG system. Goodbye!")
+        break"""
