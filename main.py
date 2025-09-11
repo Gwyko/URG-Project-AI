@@ -3,13 +3,13 @@ import os
 import json
 import random
 
-import concurrent.futures
-from functools import partial
-from tqdm import tqdm
+#import concurrent.futures
+#from functools import partial
+#from tqdm import tqdm
 
 # vvv File type loader vvv
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.document_loaders import UnstructuredWordDocumentLoader
+#from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_core.documents import Document
 
 # vvv Paragraph Splitters vvv
@@ -27,7 +27,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 # Config
 data_folder_path = "./data"
-embed_index_path = "vector_index"
+embed_index_path = "./data/vector_index"
 
 embed_model = OllamaEmbeddings(model="nomic-embed-text")
 LLM_model = "mistral" 
@@ -137,7 +137,7 @@ Answer:
 
 prompt_enhancer_template = PromptTemplate(
     template="""
-You are a helpful assistant. Your job is to take a user's question and rewrite it to be more detailed and specific for a retriever system at Sohar University.
+You are a helpful assistant. Your job is to take a user's question and rewrite it 3 times in bullet point fromat to be more detailed and specific for a retriever system at Sohar University.
 
 Original question: {question}
 
