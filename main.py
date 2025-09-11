@@ -151,7 +151,7 @@ Rewritten question:
 prompt = PromptTemplate(
     template="""
 You are an expert AI bot for Sohar University. You answer questions based ONLY on the provided context.
-Your task is to answer the user's question by providing a list of facts.
+Your task is to answer the user's question by providing a list of facts, in a more engaging tone.
 
 Rules:
 1. For EVERY single fact or statement in your answer, you MUST provide a direct citation from the context in the format [Source: file.pdf, Page: 1].
@@ -165,7 +165,8 @@ Rules:
 
 Question: {input}
 
-Answer (as a list of facts with citations):
+Answer (summarize the contexts given then conclude with a short answer unless instructed to do so ending with the citation.):
+
 """,
     input_variables=["context", "input"],
 )
@@ -173,7 +174,7 @@ Answer (as a list of facts with citations):
 print("RAG chain is ready. You can now ask questions.")
 
 # THIS THE CORE THE BRAIN THE EVERYTHINGGG!!!!
-retriever = vector_store.as_retriever(search_kwargs={'k': 5})
+retriever = vector_store.as_retriever(search_kwargs={'k': 3})
 
 verification_chain = (
     {"verify": RunnablePassthrough()}
