@@ -22,7 +22,7 @@ from langchain_community.vectorstores import FAISS # index no need to convert to
 from langchain_community.llms import Ollama
 
 # vvv Makes your life easier vvv
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.runnables import RunnablePassthrough #, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
 
 # Config
@@ -112,11 +112,11 @@ else:
 print("Building the Rag...")
 
 fun_prompts = [
-    "Got a question about the IT Faculty? Ask away! (or 'exit' to quit): ",
-    "Curious about IT courses at Sohar University? Type your question (or 'exit' to quit): ",
-    "What do you want to know about IT research or faculty at Sohar Uni? (or 'exit' to quit): ",
-    "Exploring IT opportunities? Ask about programs or facilities! (or 'exit' to quit): ",
-    "Ready to dive into Sohar University's IT world? Inquire here (or 'exit' to quit): "
+    "Ready to explore the world of IT at Sohar University? Ask me anything.", "Welcome! I can answer your questions about the university and the IT faculty. What's on your mind?", "I'm here to help you navigate Sohar University's IT programs. Go ahead and ask.", "Have a question about IT at Sohar University? Let's find the answer together!", "Curious about courses, staff, or research in the IT faculty? Ask me now.", "Looking for information on Sohar University's IT department? Ask your question here.", "Let me be your guide to the IT world at Sohar University. What would you like to know?", "Discovering IT at Sohar University has never been easier. Ask your first question.", "Hello! I'm an expert on Sohar University's IT faculty. What can I help you with today?", "Feel free to ask me anything about Sohar University's IT programs and facilities."
+]
+
+replies = [
+    "Hello there! I'm here to help with questions about the university. Could you please ask something about Sohar University or the IT faculty?", "Hey! It seems your question isn't related to what I'm trained for. Feel free to ask me anything about the university!", "Hi! I'm a friendly bot, but I can only help with topics about the university. Let me know what you'd like to know!", "I'm sorry, I can't help with that. My expertise is limited to Sohar University and its IT faculty. Please try another question!", "I'm ready to help you learn about the university. Just ask me a question about the courses, staff, or facilities!", "It looks like that's not something I can answer. How about we talk about Sohar University instead?", "To get the best answer, please ask a question about the university. I'm excited to help you!", "That's a bit outside my knowledge base. My purpose is to assist with questions about Sohar University. What's on your mind?", "I can't answer that, but I'm great at finding information about Sohar University. Give it a try!", "My apologies, I can only help with university-related questions. Please let me know if you have any questions about Sohar University."
 ]
 
 verify_question =  PromptTemplate (
@@ -180,7 +180,7 @@ verification_chain = (
     {"verify": RunnablePassthrough()}
     | verify_question
     | llm
-    |StrOutputParser()
+    | StrOutputParser()
 )
 prompt_enhancer_chain = (
     {"question": RunnablePassthrough()}
@@ -211,7 +211,8 @@ while True:
         print("Verfication Status: ", verification_result)
         if not "True" in verification_result:
             print("\n--- Answer ---")
-            print("Please ask a question related to the Sohar University or IT faculty.")
+            reply = input(random.choice(replies))
+            print(reply)
             print("-" * 50)
             continue
 
